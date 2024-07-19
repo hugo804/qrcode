@@ -2438,7 +2438,7 @@ app.post('/contador-credito/:id', async (req, res) => {
       },
     });
 
-    res.status(200).json({ message: `contador credito configurada` });
+    res.status(200).json({ message: `contador credito configuradaA` });
     
   } catch (error) {
     console.error('Error updating stock:', error);
