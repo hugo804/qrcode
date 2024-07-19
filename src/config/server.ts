@@ -3138,7 +3138,7 @@ app.get("/pagamentos-adm/:maquinaId", verifyJwtPessoa, async (req: any, res) => 
 
     }
 
-    return res.status(200).json({ "total": totalSemEstorno, "estornos": totalComEstorno, "cash": totalEspecie, "garraforte": garraforte,"probabilidade": probabilidade, "estoque": estoque,"estoque2": estoque2,"estoque3": estoque3,"estoque4": estoque4,"estoque5": estoque5,"pagamentos": pagamentos });
+    return res.status(200).json({ "total": totalSemEstorno, "estornos": totalComEstorno, "cash": totalEspecie, "garraforte": garraforte,"contadorcredito": contadorcredito,"probabilidade": probabilidade, "estoque": estoque,"estoque2": estoque2,"estoque3": estoque3,"estoque4": estoque4,"estoque5": estoque5,"pagamentos": pagamentos });
   } catch (err: any) {
     console.log(err);
     return res.status(500).json({ "retorno": "ERRO" });
