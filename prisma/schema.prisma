@@ -19,6 +19,7 @@ model Pix_Maquina {
   store_id                String?
    probabilidade          Int?
     garraforte          Int?
+        contadorcredito          Int?
       valorpulso          Int?
     garramedia          Int?
     garrafraca         Int?
