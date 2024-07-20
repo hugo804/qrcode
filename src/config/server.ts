@@ -946,6 +946,7 @@ app.put("/maquina", verifyJwtPessoa, async (req: any, res) => {
         probabilidade: req.body.probabilidade,
         garraforte: req.body.garraforte,
         contadorcredito: req.body.contadorcredito,
+        contadorpelucia: req.body.contadorpelucia,
         estoque: req.body.estoque,
         estoque2: req.body.estoque2,
         estoque3: req.body.estoque3,
@@ -980,6 +981,7 @@ app.put("/maquina-cliente", verifyJWT, async (req: any, res) => {
         probabilidade: req.body.probabilidade,
         garraforte: req.body.garraforte,
         contadorcredito: req.body.contadorcredito,
+        contadorpelucia: req.body.contadorpelucia,
         estoque: req.body.estoque,
         estoque2: req.body.estoque2,
         estoque3: req.body.estoque3,
@@ -1369,6 +1371,7 @@ app.get("/maquinas", verifyJWT, async (req: any, res) => {
             probabilidade: maquina.probabilidade,
             garraforte: maquina.garraforte,
             contadorcredito: maquina.contadorcredito,
+            contadorpelucia: maquina.contadorpelucia,
             estoque: maquina.estoque,
             estoque2: maquina.estoque2,
             estoque3: maquina.estoque3,
@@ -1392,6 +1395,7 @@ app.get("/maquinas", verifyJWT, async (req: any, res) => {
             probabilidade: maquina.probabilidade,
             garraforte: maquina.garraforte,
             contadorcredito: maquina.contadorcredito,
+            contadorpelucia: maquina.contadorpelucia,
             estoque: maquina.estoque,
             estoque2: maquina.estoque2,
             estoque3: maquina.estoque3,
@@ -1459,6 +1463,7 @@ app.get("/maquinas-adm", verifyJwtPessoa, async (req: any, res) => {
             probabilidade: maquina.probabilidade,
             garraforte: maquina.garraforte,
             contadorcredito: maquina.contadorcredito,
+            contadorpelucia: maquina.contadorpelucia,
             estoque: maquina.estoque,
             estoque2: maquina.estoque2,
             estoque3: maquina.estoque3,
@@ -1482,6 +1487,7 @@ app.get("/maquinas-adm", verifyJwtPessoa, async (req: any, res) => {
             probabilidade: maquina.probabilidade,
             garraforte: maquina.garraforte,
             contadorcredito: maquina.contadorcredito,
+            contadorpelucia: maquina.contadorpelucia,
             estoque: maquina.estoque,
             estoque2: maquina.estoque2,
             estoque3: maquina.estoque3,
@@ -2472,6 +2478,73 @@ app.get('/contador-credito/:id', async (req, res) => {
 });
 
 
+
+app.post('/contador-pelucia/:id', async (req, res) => {
+  try {
+    const maquinaId = req.params.id;
+    const contadorpelucia = req.query.valor;
+   
+
+
+    let val = Number(contadorpelucia);
+    
+
+    // Find the Pix_Maquina by id
+    const maquina = await prisma.pix_Maquina.findUnique({
+      where: {
+        id: maquinaId,
+      },
+    });
+
+    if (!maquina) {
+      return res.status(404).json({ error: 'Maquina não encontrada!' });
+    }
+
+    // Perform the update
+    await prisma.pix_Maquina.update({
+      where: {
+        id: maquinaId,
+      },
+      data: {
+        contadorpelucia: val,
+        
+      },
+    });
+
+    res.status(200).json({ message: `contador pelucia configuradaA` });
+    
+  } catch (error) {
+    console.error('Error updating stock:', error);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+});
+
+app.get('/contador-pelucia/:id', async (req, res) => {
+  try {
+    const maquinaId = req.params.id;
+
+    // Find the Pix_Maquina by id
+    const maquina = await prisma.pix_Maquina.findUnique({
+      where: {
+        id: maquinaId,
+      },
+      select: {
+       contadorpelucia: true,
+      },
+    });
+
+    if (!maquina) {
+      return res.status(404).json({ error: 'Máquina não encontrada!' });
+    }
+
+    res.status(200).json({ contadorpelucia: maquina.contadorpelucia });
+  } catch (error) {
+    console.error('Error retrieving probability:', error);
+    return res.status(500).json({ error: 'Erro interno do servidor.' });
+  }
+});
+
+
 app.post('/garra-forte/:id', async (req, res) => {
   try {
     const maquinaId = req.params.id;
@@ -3022,8 +3095,9 @@ app.get("/pagamentos/:maquinaId", verifyJWT, async (req: any, res) => {
       return res.status(404).json({ error: 'Máquina não encontrada' });
     }
 
-    // Verifica se o estoque está definido e retorna seu valorg
+    // Verifica se o estoque está definido e retorna seu valorgig
     const contadorcredito = maquina.contadorcredito !== null ? maquina.contadorcredito : '--';
+    const contadorpelucia = maquina.contadorpelucia !== null ? maquina.contadorpelucia : '--';
     const probabilidade = maquina.probabilidade !== null ? maquina.probabilidade : '--';
     const garraforte = maquina.garraforte !== null ? maquina.garraforte : '--';
     const estoque = maquina.estoque !== null ? maquina.estoque : '--';
@@ -3061,7 +3135,7 @@ app.get("/pagamentos/:maquinaId", verifyJWT, async (req: any, res) => {
 
     }
 
-    return res.status(200).json({ "total": totalSemEstorno, "estornos": totalComEstorno, "cash": totalEspecie, "garraforte": garraforte,"contadorcredito": contadorcredito,"probabilidade": probabilidade,"estoque": estoque, "pagamentos": pagamentos });
+    return res.status(200).json({ "total": totalSemEstorno, "estornos": totalComEstorno, "cash": totalEspecie, "garraforte": garraforte, "contadorpelucia": contadorpelucia,"contadorcredito": contadorcredito,"probabilidade": probabilidade,"estoque": estoque, "pagamentos": pagamentos });
   } catch (err: any) {
     console.log(err);
     return res.status(500).json({ "retorno": "ERRO" });
@@ -3103,6 +3177,7 @@ app.get("/pagamentos-adm/:maquinaId", verifyJwtPessoa, async (req: any, res) => 
     const probabilidade = maquina.probabilidade !== null ? maquina.probabilidade : '--';
     const garraforte = maquina.garraforte !== null ? maquina.garraforte : '--';
     const contadorcredito = maquina.contadorcredito !== null ? maquina.contadorcredito : '--';
+    const contadorpelucia = maquina.contadorpelucia !== null ? maquina.contadorpelucia : '--';
     const estoque = maquina.estoque !== null ? maquina.estoque : '--';
     const estoque2 = maquina.estoque2 !== null ? maquina.estoque2 : '--';
     const estoque3 = maquina.estoque3 !== null ? maquina.estoque3 : '--';
@@ -3138,7 +3213,7 @@ app.get("/pagamentos-adm/:maquinaId", verifyJwtPessoa, async (req: any, res) => 
 
     }
 
-    return res.status(200).json({ "total": totalSemEstorno, "estornos": totalComEstorno, "cash": totalEspecie, "garraforte": garraforte,"contadorcredito": contadorcredito,"probabilidade": probabilidade, "estoque": estoque,"estoque2": estoque2,"estoque3": estoque3,"estoque4": estoque4,"estoque5": estoque5,"pagamentos": pagamentos });
+    return res.status(200).json({ "total": totalSemEstorno, "estornos": totalComEstorno, "cash": totalEspecie, "garraforte": garraforte,"contadorpelucia": contadorpelucia,"contadorcredito": contadorcredito,"probabilidade": probabilidade, "estoque": estoque,"estoque2": estoque2,"estoque3": estoque3,"estoque4": estoque4,"estoque5": estoque5,"pagamentos": pagamentos });
   } catch (err: any) {
     console.log(err);
     return res.status(500).json({ "retorno": "ERRO" });

@@ -20,6 +20,7 @@ model Pix_Maquina {
    probabilidade          Int?
     garraforte          Int?
         contadorcredito          Int?
+        contadorpelucia          Int?
       valorpulso          Int?
     garramedia          Int?
     garrafraca         Int?
