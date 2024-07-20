@@ -2411,52 +2411,44 @@ app.get('/probabilidade/:id', async (req, res) => {
 });
 
 
-app.post("/contador-credito/:id/", async (req: any, res: any) => {
-
+app.post('/contador-credito/:id', async (req, res) => {
   try {
-
+    const maquinaId = req.params.id;
+    const contadorcredito = req.query.valor;
    
-    const value = req.query.valor;
+
+
+    let val = Number(contadorcredito);
     
 
-    // Find the Pix_Maquina by idh
+    // Find the Pix_Maquina by id
     const maquina = await prisma.pix_Maquina.findUnique({
       where: {
-        id: req.params.id,
+        id: maquinaId,
       },
     });
 
     if (!maquina) {
-      return res.status(404).json({ "retorno": "error.. máquina nulo ou não encontrado!" });
+      return res.status(404).json({ error: 'Maquina não encontrada!' });
     }
-
-    // Calculate the new stock value
-   
-    let contadorcredito: number | null = maquina.contadorcredito !== null ? maquina.contadorcredito + Number(value) : +1;
-    
 
     // Perform the update
     await prisma.pix_Maquina.update({
       where: {
-        id: req.params.id,
+        id: maquinaId,
       },
       data: {
-      
-        contadorcredito: contadorcredito,
-       
+        contadorcredito: val,
+        
       },
     });
 
-    console.log("Estoque atualizado");
-   
-    return res.status(200).json({ "Estoque atual2": `${contadorcredito}` });
+    res.status(200).json({ message: `contador credito configurada` });
     
   } catch (error) {
-    console.error("Error updating stock:", error);
-    return res.status(404).json({ "retorno": "Erro ao tentar atualizar estoque" });
+    console.error('Error updating stock:', error);
+    return res.status(500).json({ error: 'Internal server error.' });
   }
-
-
 });
 
 
@@ -2487,52 +2479,45 @@ app.get('/contador-credito/:id', async (req, res) => {
 
 
 
-app.post("/contador-pelucia/:id/", async (req: any, res: any) => {
 
+app.post('/contador-pelucia/:id', async (req, res) => {
   try {
-
+    const maquinaId = req.params.id;
+    const contadorpelucia = req.query.valor;
    
-    const value = req.query.valor;
+
+
+    let val = Number(contadorpelucia);
     
 
-    // Find the Pix_Maquina by idh
+    // Find the Pix_Maquina by id
     const maquina = await prisma.pix_Maquina.findUnique({
       where: {
-        id: req.params.id,
+        id: maquinaId,
       },
     });
 
     if (!maquina) {
-      return res.status(404).json({ "retorno": "error.. máquina nulo ou não encontrado!" });
+      return res.status(404).json({ error: 'Maquina não encontrada!' });
     }
-
-    // Calculate the new stock value
-   
-    let contadorpelucia: number | null = maquina.contadorpelucia !== null ? maquina.contadorpelucia + Number(value) : +1;
-    
 
     // Perform the update
     await prisma.pix_Maquina.update({
       where: {
-        id: req.params.id,
+        id: maquinaId,
       },
       data: {
-      
-        contadorpelucia: contadorpelucia,
-       
+        contadorpelucia: val,
+        
       },
     });
 
-    console.log("Estoque atualizado");
-   
-    return res.status(200).json({ "Estoque atual2": `${contadorpelucia}` });
+    res.status(200).json({ message: `contador pelucia configurada` });
     
   } catch (error) {
-    console.error("Error updating stock:", error);
-    return res.status(404).json({ "retorno": "Erro ao tentar atualizar estoque" });
+    console.error('Error updating stock:', error);
+    return res.status(500).json({ error: 'Internal server error.' });
   }
-
-
 });
 
 app.get('/contador-pelucia/:id', async (req, res) => {
