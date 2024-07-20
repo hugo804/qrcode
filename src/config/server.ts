@@ -3022,7 +3022,7 @@ app.get("/pagamentos/:maquinaId", verifyJWT, async (req: any, res) => {
       return res.status(404).json({ error: 'Máquina não encontrada' });
     }
 
-    // Verifica se o estoque está definido e retorna seu valor
+    // Verifica se o estoque está definido e retorna seu valorg
     const contadorcredito = maquina.contadorcredito !== null ? maquina.contadorcredito : '--';
     const probabilidade = maquina.probabilidade !== null ? maquina.probabilidade : '--';
     const garraforte = maquina.garraforte !== null ? maquina.garraforte : '--';
