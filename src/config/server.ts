@@ -2005,7 +2005,7 @@ app.get('/getData', async (req, res) => {
 });
 
 
-app.post('/register', async (req, res) => {
+app.post('/users', async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await prisma.user.create({
