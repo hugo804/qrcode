@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,7 +8,11 @@ datasource db {
 }
 
 //V3 - Máquinas Management
-
+model Pix_EmailSenha {
+  id     String   @id @default(uuid())
+  email  String
+  senha  String
+}
 model Pix_Maquina {
   id                      String    @id @default(uuid())
   pessoaId                String
@@ -17,19 +20,7 @@ model Pix_Maquina {
   nome                    String
   descricao               String?
   store_id                String?
-   probabilidade          Int?
-    garraforte          Int?
-        contadorcredito          Int?
-        contadorpelucia          Int?
-      valorpulso          Int?
-    garramedia          Int?
-    garrafraca         Int?
-    garrapegada          Int?
   estoque                 Int?
-  estoque2                 Int?
-  estoque3                 Int?
-  estoque4                 Int?
-  estoque5                 Int?
   valorDoPix              String
   valorDoPulso            String    @default("1")
   dataInclusao            DateTime  @default(now())
@@ -41,7 +32,16 @@ model Pix_Maquina {
   pessoa  Pix_Pessoa?  @relation(fields: [pessoaId], references: [id])
   cliente Pix_Cliente? @relation(fields: [clienteId], references: [id])
 }
-
+model User {
+  id       Int      @id @default(autoincrement())
+  email    String   @unique
+  password String
+}
+model Data {
+  id        String   @id @default(uuid())
+  urlm      String
+  createdAt DateTime @default(now())
+}
 model Pix_Pessoa {
   id           String    @id @default(uuid())
   nome         String

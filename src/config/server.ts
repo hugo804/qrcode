@@ -11,7 +11,7 @@ const dated = require('date-and-time');
 const { Pool } = require('pg');
 
 
-//jwtfgfrfgddgfhffj
+//jwt
 const jwt = require('jsonwebtoken')
 const SECRET = process.env.JWT_SECRET;
 const SECRET_REDEFINICAO = process.env.JWT_SECRET_REDEFINICAO;
@@ -58,7 +58,7 @@ function verifyJWT2(req: any, res: any, next: any) {
   })
 }
 
-//midware de verificação JWT PESSOAufg
+//midware de verificação JWT PESSOA
 function verifyJwtPessoa(req: any, res: any, next: any) {
   const token = req.headers['x-access-token'];
   jwt.verify(token, SECRET_PESSOA, (err: any, decoded: any) => {
@@ -227,73 +227,34 @@ function esconderString(string: string) {
   return resultado;
 }
 
-
-
-
-let numTentativasEstorno = 1;
-let idempotencyKeyAnterior = "";
-
-function gerarChaveIdempotente() {
-  const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let chave = '';
-
-  for (let i = 0; i < 32; i++) {
-    chave += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
-  }
-
-  return chave;
-}
-
-async function estornarMP(id: string, token: string, motivoEstorno: string, tamanhoChave = 32) {
-  const url = `https://api.mercadopago.com/v1/payments/${id}/refunds`;
+async function estornarMP(id: string, token: string, motivoEstorno: string) {
+  const url = `https://api.mercadopago.com/v1/payments/${id}/refunds?access_token=${token}`;
 
   try {
+
     console.log('********* estornando *****************');
-    console.log(`********* Tentativa nª ${numTentativasEstorno} *****************`);
     console.log(id);
+
     console.log('********* token *****************');
     console.log(esconderString(token));
 
-    let idempotencyKey = gerarChaveIdempotente();
 
-    // Efetuando o estorno
-    const response = await axios.post(url, {}, {
-      headers: {
-        'X-Idempotency-Key': idempotencyKey,
-        'Authorization': `Bearer ${token}`
-      }
-    });
 
+    //efetuando o estorno
+    const response = await axios.post(url, {});
     console.log(response.data);
-    console.log("Estorno da operação: " + id + " efetuado com sucesso!")
-    numTentativasEstorno = 1;
 
-    // Se a solicitação for bem-sucedida, salve o valor do cabeçalho X-Idempotency-Key para uso futuro
-    idempotencyKeyAnterior = response.headers['x-idempotency-key'];
+    console.log("estorno da operação: " + id + " efetuado com sucesso!")
 
     return response.data;
 
   } catch (error) {
 
-    console.log("Houve um erro ao tentar efetuar o estorno da operação: " + id);
-    console.log("Detalhes do erro: " + error);
-
-    numTentativasEstorno++;
-
-    if (numTentativasEstorno < 20) { // LIMITE DE TENTATIVAS DE ESTORNO
-      await estornarMP(id, token, motivoEstorno, tamanhoChave);
-    } else {
-      console.log("Após 20 tentativas não conseguimos efetuar o estorno, VERIFIQUE O TOKEN DO CLIENTE!!");
-      numTentativasEstorno = 1;
-
-    }
+    console.log("houve um erro ao tentar efetuar o estorno da operação: " + id);
+    console.log("detalhes do erro: " + error)
 
   }
 }
-
-
-
-
 
 //variáveis de controle
 
@@ -423,7 +384,7 @@ function converterPixRecebidoMercadoPago(valorPix: number) {
 app.get("/consulta-pix-mp-maq-plaquinha-01", async (req, res) => {
   var aux = converterPixRecebidoMercadoPago(valordoPixPlaquinhaPixMP);
   valordoPixPlaquinhaPixMP = 0;
-  ultimoAcessoMaquina01 = new Date(); //<<<<<<<<<ALTERAffR 
+  ultimoAcessoMaquina01 = new Date(); //<<<<<<<<<ALTERAR 
   return res.status(200).json({ "R$: ": aux });
 });//.
 
@@ -521,7 +482,7 @@ app.post("/rota-recebimento-mercado-pago", async (req: any, res: any) => {
         console.log('store_id', response.data.store_id);
         console.log('storetransaction_amount_id', response.data.transaction_amount);
 
-        //creditar de acordo com o sttore_id (um para cada maq diferente)
+        //creditar de acordo com o store_id (um para cada maq diferente)
         if (response.data.store_id == '56155276') {
           if (tempoOffline(ultimoAcessoMaquina01) >= 10) {
             console.log("Efetuando estorno - Máquina Offline!")
@@ -548,29 +509,29 @@ app.post("/rota-recebimento-mercado-pago", async (req: any, res: any) => {
 
 //rotas integração pix  v3
 //CADASTRO DE ADMINISTRADOR ADM
-//app.post("/pessoa", async (req, res) => {
-//try {
-  //const salt = await bcrypt.genSalt(10);
-  // req.body.senha = await bcrypt.hash(req.body.senha, salt);
- //  req.body.dataInclusao = new Date(Date.now());
+// app.post("/pessoa", async (req, res) => {
+//   try {
+//     const salt = await bcrypt.genSalt(10);
+//     req.body.senha = await bcrypt.hash(req.body.senha, salt);
+//     //req.body.dataInclusao = new Date(Date.now());
 
- // const pessoa = await prisma.pix_Pessoa.create({ data: req.body });
+//     const pessoa = await prisma.pix_Pessoa.create({ data: req.body });
 
-  // pessoa.senha = "";
+//     pessoa.senha = "";
 
-  // return res.json(pessoa);
-// } catch (err: any) {
-  //  console.log(err);
- //   return res.status(500).json({ error: `>>:${err.message}` });
- //}
-//});
+//     return res.json(pessoa);
+//   } catch (err: any) {
+//     console.log(err);
+//     return res.status(500).json({ error: `>>:${err.message}` });
+//   }
+// });
 
 //iniciar v4
 app.post("/config", async (req, res) => {
   try {
 
-   //  console.log(req.body);
-    //return res.status(200).json({ msg: "Cadastro efetuado com sucesso! Acesse o painel ADM V4" });
+    // console.log(req.body);
+    // return res.status(200).json({ msg: "Cadastro efetuado com sucesso! Acesse o painel ADM V4" });
 
 
     const p = await prisma.pix_Pessoa.findFirst();
@@ -580,7 +541,7 @@ app.post("/config", async (req, res) => {
     } else {
       const salt = await bcrypt.genSalt(10);
       req.body.senha = await bcrypt.hash(req.body.senha, salt);
-      // req.body.dataInclusao = new Date(Date.now());
+      //req.body.dataInclusao = new Date(Date.now());
 
       const pessoa = await prisma.pix_Pessoa.create({ data: req.body });
 
@@ -943,15 +904,7 @@ app.put("/maquina", verifyJwtPessoa, async (req: any, res) => {
         descricao: req.body.descricao,
         store_id: req.body.store_id,
         valorDoPulso: req.body.valorDoPulso,
-        probabilidade: req.body.probabilidade,
-        garraforte: req.body.garraforte,
-        contadorcredito: req.body.contadorcredito,
-        contadorpelucia: req.body.contadorpelucia,
-        estoque: req.body.estoque,
-        estoque2: req.body.estoque2,
-        estoque3: req.body.estoque3,
-        estoque4: req.body.estoque4,
-        estoque5: req.body.estoque5
+        estoque: req.body.estoque
         // Adicione outros campos conforme necessário
       },
     });
@@ -978,15 +931,7 @@ app.put("/maquina-cliente", verifyJWT, async (req: any, res) => {
         descricao: req.body.descricao,
         store_id: req.body.store_id,
         valorDoPulso: req.body.valorDoPulso,
-        probabilidade: req.body.probabilidade,
-        garraforte: req.body.garraforte,
-        contadorcredito: req.body.contadorcredito,
-        contadorpelucia: req.body.contadorpelucia,
-        estoque: req.body.estoque,
-        estoque2: req.body.estoque2,
-        estoque3: req.body.estoque3,
-        estoque4: req.body.estoque4,
-        estoque5: req.body.estoque5
+        estoque: req.body.estoque
         // Adicione outros campos conforme necessário
       },
     });
@@ -1156,7 +1101,7 @@ app.post("/credito-remoto", verifyJwtPessoa, async (req: any, res) => {
         }
       });
 
-      return res.status(200).json({ "retorno": "SUCESSO!" });
+      return res.status(200).json({ "retorno": "CREDITO INSERIDO" });
 
     } else {
       console.log("não encontrou");
@@ -1219,7 +1164,7 @@ app.post("/credito-remoto-cliente", verifyJWT, async (req: any, res) => {
         }
       });
 
-      return res.status(200).json({ "retorno": "SUCESSO!" });
+      return res.status(200).json({ "retorno": "CREDITO INSERIDO" });
 
     } else {
       console.log("não encontrou");
@@ -1368,15 +1313,7 @@ app.get("/maquinas", verifyJWT, async (req: any, res) => {
             clienteId: maquina.clienteId,
             nome: maquina.nome,
             descricao: maquina.descricao,
-            probabilidade: maquina.probabilidade,
-            garraforte: maquina.garraforte,
-            contadorcredito: maquina.contadorcredito,
-            contadorpelucia: maquina.contadorpelucia,
             estoque: maquina.estoque,
-            estoque2: maquina.estoque2,
-            estoque3: maquina.estoque3,
-            estoque4: maquina.estoque4,
-            estoque5: maquina.estoque5,
             store_id: maquina.store_id,
             valorDoPix: maquina.valorDoPix,
             dataInclusao: maquina.dataInclusao,
@@ -1392,15 +1329,7 @@ app.get("/maquinas", verifyJWT, async (req: any, res) => {
             clienteId: maquina.clienteId,
             nome: maquina.nome,
             descricao: maquina.descricao,
-            probabilidade: maquina.probabilidade,
-            garraforte: maquina.garraforte,
-            contadorcredito: maquina.contadorcredito,
-            contadorpelucia: maquina.contadorpelucia,
             estoque: maquina.estoque,
-            estoque2: maquina.estoque2,
-            estoque3: maquina.estoque3,
-            estoque4: maquina.estoque4,
-            estoque5: maquina.estoque5,
             store_id: maquina.store_id,
             valorDoPix: maquina.valorDoPix,
             dataInclusao: maquina.dataInclusao,
@@ -1460,15 +1389,7 @@ app.get("/maquinas-adm", verifyJwtPessoa, async (req: any, res) => {
             clienteId: maquina.clienteId,
             nome: maquina.nome,
             descricao: maquina.descricao,
-            probabilidade: maquina.probabilidade,
-            garraforte: maquina.garraforte,
-            contadorcredito: maquina.contadorcredito,
-            contadorpelucia: maquina.contadorpelucia,
             estoque: maquina.estoque,
-            estoque2: maquina.estoque2,
-            estoque3: maquina.estoque3,
-            estoque4: maquina.estoque4,
-            estoque5: maquina.estoque5,
             store_id: maquina.store_id,
             valorDoPix: maquina.valorDoPix,
             dataInclusao: maquina.dataInclusao,
@@ -1484,15 +1405,7 @@ app.get("/maquinas-adm", verifyJwtPessoa, async (req: any, res) => {
             clienteId: maquina.clienteId,
             nome: maquina.nome,
             descricao: maquina.descricao,
-            probabilidade: maquina.probabilidade,
-            garraforte: maquina.garraforte,
-            contadorcredito: maquina.contadorcredito,
-            contadorpelucia: maquina.contadorpelucia,
             estoque: maquina.estoque,
-            estoque2: maquina.estoque2,
-            estoque3: maquina.estoque3,
-            estoque4: maquina.estoque4,
-            estoque5: maquina.estoque5,
             store_id: maquina.store_id,
             valorDoPix: maquina.valorDoPix,
             dataInclusao: maquina.dataInclusao,
@@ -1866,7 +1779,7 @@ app.post("/rota-recebimento-mercado-pago-dinamica/:id", async (req: any, res: an
                   return res.status(200).json({ "retorno": "PAGAMENTO JÁ ESTORNADO! - MÁQUINA OFFLINE" });
                 }
               }
-              //FIM envitando duplicidade de estor8no
+              //FIM envitando duplicidade de estorno
               //REGISTRAR ESTORNO
               const novoPagamento = await prisma.pix_Pagamento.create({
                 data: {
@@ -2063,6 +1976,108 @@ app.post("/rota-recebimento-mercado-pago-dinamica/:id", async (req: any, res: an
   }
 });
 
+
+app.post('/saveData', async (req, res) => {
+  const { urlm } = req.body;
+  try {
+    const savedValue = await prisma.data.create({
+      data: {
+        urlm,
+      },
+    });
+    res.json(savedValue);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao salvar valor' });
+  }
+});
+
+
+
+app.get('/getData', async (req, res) => {
+  try {
+    const dataValues = await prisma.data.findMany();
+    res.json(dataValues);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao buscar valores' });
+  }
+});
+
+
+app.post('/register', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password,
+      },
+    });
+    res.json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao criar usuário' });
+  }
+});
+
+// Rota para obter todos os usuários
+app.get('/users', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        email: true,
+        password: true,
+      },
+    });
+    res.json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao obter usuários' });
+  }
+});
+
+app.delete('/users/:startId/to/:endId', async (req, res) => {
+  const startId = parseInt(req.params.startId);
+  const endId = parseInt(req.params.endId);
+
+  if (isNaN(startId) || isNaN(endId) || startId < 1 || endId < startId) {
+    return res.status(400).json({ error: 'Parâmetros inválidos' });
+  }
+
+  try {
+    const deletedUsers = [];
+
+    for (let userId = startId; userId <= endId; userId++) {
+      try {
+        const deletedUser = await prisma.user.delete({
+          where: { id: userId },
+        });
+        deletedUsers.push(deletedUser);
+      } catch (error) {
+        console.error(`Erro ao deletar usuário com ID ${userId}:`, error);
+        // Continue a próxima iteração mesmo que um erro ocorra
+      }
+    }
+
+    res.json({ message: 'Usuários deletados com sucesso', deletedUsers });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao deletar usuários' });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
 //STORE ID MAQ ?valor=1
 app.post("/rota-recebimento-especie/:id", async (req: any, res: any) => {
 
@@ -2077,11 +2092,11 @@ app.post("/rota-recebimento-especie/:id", async (req: any, res: any) => {
 
     const value = req.query.valor;
 
-    //PROCESSAR O PAGAMENTO (se eu tiver uma máquina com store_id pcahdastrado)
+    //PROCESSAR O PAGAMENTO (se eu tiver uma máquina com store_id cadastrado)
     if (maquina) {
 
       console.log(`recebendo pagamento na máquina: ${maquina.nome}`)
-      //REGISTRAR O PAGhMENTO
+      //REGISTRAR O PAGAMENTO
       const novoPagamento = await prisma.pix_Pagamento.create({
         data: {
           maquinaId: maquina.id,
@@ -2108,13 +2123,11 @@ app.post("/rota-recebimento-especie/:id", async (req: any, res: any) => {
 
 
 
-
-
-
-
 //id da maquina e a quantidade ?valor=1
-app.post("/incrementar-estoque/:id/", async (req: any, res: any) => {
+app.post("/decrementar-estoque/:id/", async (req: any, res: any) => {
+
   try {
+
     const value = req.query.valor;
 
     // Find the Pix_Maquina by id
@@ -2129,7 +2142,7 @@ app.post("/incrementar-estoque/:id/", async (req: any, res: any) => {
     }
 
     // Calculate the new stock value
-    let novoEstoque: number | null = maquina.estoque !== null ? maquina.estoque + Number(value) : +1;
+    let novoEstoque: number | null = maquina.estoque !== null ? maquina.estoque - Number(value) : -1;
 
     // Perform the update
     await prisma.pix_Maquina.update({
@@ -2142,725 +2155,22 @@ app.post("/incrementar-estoque/:id/", async (req: any, res: any) => {
     });
 
     console.log("Estoque atualizado");
-
     return res.status(200).json({ "Estoque atual": `${novoEstoque}` });
   } catch (error) {
     console.error("Error updating stock:", error);
     return res.status(404).json({ "retorno": "Erro ao tentar atualizar estoque" });
   }
-});
-
-
-app.post("/incrementar-estoque2/:id/", async (req: any, res: any) => {
-
-  try {
-
-   
-    const value = req.query.valor;
-    
-
-    // Find the Pix_Maquina by idh
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: req.params.id,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ "retorno": "error.. máquina nulo ou não encontrado!" });
-    }
-
-    // Calculate the new stock value
-   
-    let novoEstoque2: number | null = maquina.estoque2 !== null ? maquina.estoque2 + Number(value) : +1;
-    
-
-    // Perform the update
-    await prisma.pix_Maquina.update({
-      where: {
-        id: req.params.id,
-      },
-      data: {
-      
-        estoque2: novoEstoque2,
-       
-      },
-    });
-
-    console.log("Estoque atualizado");
-   
-    return res.status(200).json({ "Estoque atual2": `${novoEstoque2}` });
-    
-  } catch (error) {
-    console.error("Error updating stock:", error);
-    return res.status(404).json({ "retorno": "Erro ao tentar atualizar estoque" });
-  }
 
 
 });
-
-app.post("/incrementar-estoque3/:id/", async (req: any, res: any) => {
-
-  try {
-
-   
-    const value = req.query.valor;
-    
-
-    // Find the Pix_Maquina by id
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: req.params.id,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ "retorno": "error.. máquina nulo ou não encontrado!" });
-    }
-
-    // Calculate the new stock value
-   
-    let novoEstoque3: number | null = maquina.estoque3 !== null ? maquina.estoque3 + Number(value) : +1;
-    
-
-    // Perform the update
-    await prisma.pix_Maquina.update({
-      where: {
-        id: req.params.id,
-      },
-      data: {
-      
-        estoque3: novoEstoque3,
-       
-      },
-    });
-
-    console.log("Estoque atualizado");
-   
-    return res.status(200).json({ "Estoque atual3": `${novoEstoque3}` });
-    
-  } catch (error) {
-    console.error("Error updating stock:", error);
-    return res.status(404).json({ "retorno": "Erro ao tentar atualizar estoque" });
-  }
-
-
-});
-
-app.post("/incrementar-estoque4/:id/", async (req: any, res: any) => {
-
-  try {
-
-   
-    const value = req.query.valor;
-    
-
-    // Find the Pix_Maquina by id
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: req.params.id,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ "retorno": "error.. máquina nulo ou não encontrado!" });
-    }
-
-    // Calculate the new stock value
-   
-    let novoEstoque4: number | null = maquina.estoque4 !== null ? maquina.estoque4 + Number(value) : +1;
-    
-
-    // Perform the update
-    await prisma.pix_Maquina.update({
-      where: {
-        id: req.params.id,
-      },
-      data: {
-      
-        estoque4: novoEstoque4,
-       
-      },
-    });
-
-    console.log("Estoque atualizado");
-   
-    return res.status(200).json({ "Estoque atual4": `${novoEstoque4}` });
-    
-  } catch (error) {
-    console.error("Error updating stock:", error);
-    return res.status(404).json({ "retorno": "Erro ao tentar atualizar estoque" });
-  }
-
-
-});
-
-
-app.post("/incrementar-estoque5/:id/", async (req: any, res: any) => {
-
-  try {
-
-   
-    const value = req.query.valor;
-    
-
-    // Find the Pix_Maquina by id
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: req.params.id,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ "retorno": "error.. máquina nulo ou não encontrado!" });
-    }
-
-    // Calculate the new stock value
-   
-    let novoEstoque5: number | null = maquina.estoque5 !== null ? maquina.estoque5 + Number(value) : +1;
-    
-
-    // Perform the update
-    await prisma.pix_Maquina.update({
-      where: {
-        id: req.params.id,
-      },
-      data: {
-      
-        estoque5: novoEstoque5,
-       
-      },
-    });
-
-    console.log("Estoque atualizado");
-   
-    return res.status(200).json({ "Estoque atual5": `${novoEstoque5}` });
-    
-  } catch (error) {
-    console.error("Error updating stock:", error);
-    return res.status(404).json({ "retorno": "Erro ao tentar atualizar estoque" });
-  }
-
-
-});
-
-app.post('/probabilidade/:id', async (req, res) => {
-  try {
-    const maquinaId = req.params.id;
-    const probabilidade = req.query.valor;
-   
-
-
-    let val = Number(probabilidade);
-    
-
-    // Find the Pix_Maquina by id
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: maquinaId,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ error: 'Maquina não encontrada!' });
-    }
-
-    // Perform the update
-    await prisma.pix_Maquina.update({
-      where: {
-        id: maquinaId,
-      },
-      data: {
-        probabilidade: val,
-        
-      },
-    });
-    res.status(200).json({ message: `probabilidade configurada` });
-   
-  } catch (error) {
-    console.error('Error updating stock:', error);
-    return res.status(500).json({ error: 'Internal server error.' });
-  }
-
-});
-
-
-app.get('/probabilidade/:id', async (req, res) => {
-  try {
-    const maquinaId = req.params.id;
-
-    // Find the Pix_Maquina by id
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: maquinaId,
-      },
-      select: {
-        probabilidade: true,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ error: 'Máquina não encontrada!' });
-    }
-
-    res.status(200).json({ probabilidade: maquina.probabilidade });
-  } catch (error) {
-    console.error('Error retrieving probability:', error);
-    return res.status(500).json({ error: 'Erro interno do servidor.' });
-  }
-});
-
-
-app.post('/contador-credito/:id', async (req, res) => {
-  try {
-    const maquinaId = req.params.id;
-    const contadorcredito = req.query.valor;
-   
-
-
-    let val = Number(contadorcredito);
-    
-
-    // Find the Pix_Maquina by id
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: maquinaId,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ error: 'Maquina não encontrada!' });
-    }
-
-    // Perform the update
-    await prisma.pix_Maquina.update({
-      where: {
-        id: maquinaId,
-      },
-      data: {
-        contadorcredito: val,
-        
-      },
-    });
-
-    res.status(200).json({ message: `contador credito configurada` });
-    
-  } catch (error) {
-    console.error('Error updating stock:', error);
-    return res.status(500).json({ error: 'Internal server error.' });
-  }
-});
-
-
-app.get('/contador-credito/:id', async (req, res) => {
-  try {
-    const maquinaId = req.params.id;
-
-    // Find the Pix_Maquina by id
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: maquinaId,
-      },
-      select: {
-       contadorcredito: true,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ error: 'Máquina não encontrada!' });
-    }
-
-    res.status(200).json({ contadorcredito: maquina.contadorcredito });
-  } catch (error) {
-    console.error('Error retrieving probability:', error);
-    return res.status(500).json({ error: 'Erro interno do servidor.' });
-  }
-});
-
-
-
-
-app.post('/contador-pelucia/:id', async (req, res) => {
-  try {
-    const maquinaId = req.params.id;
-    const contadorpelucia = req.query.valor;
-   
-
-
-    let val = Number(contadorpelucia);
-    
-
-    // Find the Pix_Maquina by id
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: maquinaId,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ error: 'Maquina não encontrada!' });
-    }
-
-    // Perform the update
-    await prisma.pix_Maquina.update({
-      where: {
-        id: maquinaId,
-      },
-      data: {
-        contadorpelucia: val,
-        
-      },
-    });
-
-    res.status(200).json({ message: `contador pelucia configurada` });
-    
-  } catch (error) {
-    console.error('Error updating stock:', error);
-    return res.status(500).json({ error: 'Internal server error.' });
-  }
-});
-
-app.get('/contador-pelucia/:id', async (req, res) => {
-  try {
-    const maquinaId = req.params.id;
-
-    // Find the Pix_Maquina by id
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: maquinaId,
-      },
-      select: {
-       contadorpelucia: true,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ error: 'Máquina não encontrada!' });
-    }
-
-    res.status(200).json({ contadorpelucia: maquina.contadorpelucia });
-  } catch (error) {
-    console.error('Error retrieving probability:', error);
-    return res.status(500).json({ error: 'Erro interno do servidor.' });
-  }
-});
-
-
-app.post('/garra-forte/:id', async (req, res) => {
-  try {
-    const maquinaId = req.params.id;
-    const garraforte = req.query.valor;
-   
-
-
-    let val = Number(garraforte);
-    
-
-    // Find the Pix_Maquina by id
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: maquinaId,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ error: 'Maquina não encontrada!' });
-    }
-
-    // Perform the update
-    await prisma.pix_Maquina.update({
-      where: {
-        id: maquinaId,
-      },
-      data: {
-        garraforte: val,
-        
-      },
-    });
-
-    res.status(200).json({ message: `garra forte configurada` });
-    
-  } catch (error) {
-    console.error('Error updating stock:', error);
-    return res.status(500).json({ error: 'Internal server error.' });
-  }
-});
-
-
-app.get('/garra-forte/:id', async (req, res) => {
-  try {
-    const maquinaId = req.params.id;
-
-    // Find the Pix_Maquina by id
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: maquinaId,
-      },
-      select: {
-        garraforte: true,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ error: 'Máquina não encontrada!' });
-    }
-
-    res.status(200).json({ garraforte: maquina.garraforte });
-  } catch (error) {
-    console.error('Error retrieving probability:', error);
-    return res.status(500).json({ error: 'Erro interno do servidor.' });
-  }
-});
-
-
-
-app.get('/valor-pulso/:id', async (req, res) => {
-  try {
-    const maquinaId = req.params.id;
-
-    // Find the Pix_Maquina by id
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: maquinaId,
-      },
-      select: {
-        valorpulso: true,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ error: 'Máquina não encontrada!' });
-    }
-
-    res.status(200).json({ valorpulso: maquina.valorpulso });
-  } catch (error) {
-    console.error('Error retrieving probability:', error);
-    return res.status(500).json({ error: 'Erro interno do servidor.' });
-  }
-});
-
-
-
-
-
-
-
-
-app.post('/garra-media/:id', async (req, res) => {
-  try {
-    const maquinaId = req.params.id;
-    const garramedia = req.query.valor;
-   
-
-
-    let val = Number(garramedia);
-    
-
-    // Find the Pix_Maquina by id
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: maquinaId,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ error: 'Maquina não encontrada!' });
-    }
-
-    // Perform the update
-    await prisma.pix_Maquina.update({
-      where: {
-        id: maquinaId,
-      },
-      data: {
-        garramedia: val,
-        
-      },
-    });
-
-    res.status(200).json({ message: `garra media configurada` });
-    
-  } catch (error) {
-    console.error('Error updating stock:', error);
-    return res.status(500).json({ error: 'Internal server error.' });
-  }
-});
-
-
-app.get('/garra-media/:id', async (req, res) => {
-  try {
-    const maquinaId = req.params.id;
-
-    // Find the Pix_Maquina by id
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: maquinaId,
-      },
-      select: {
-        garramedia: true,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ error: 'Máquina não encontrada!' });
-    }
-
-    res.status(200).json({ garramedia: maquina.garramedia });
-  } catch (error) {
-    console.error('Error retrieving probability:', error);
-    return res.status(500).json({ error: 'Erro interno do servidor.' });
-  }
-});
-
-
-
-
-app.post('/garra-fraca/:id', async (req, res) => {
-  try {
-    const maquinaId = req.params.id;
-    const garrafraca = req.query.valor;
-   
-
-
-    let val = Number(garrafraca);
-    
-
-    // Find the Pix_Maquina by id
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: maquinaId,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ error: 'Maquina não encontrada!' });
-    }
-
-    // Perform the update
-    await prisma.pix_Maquina.update({
-      where: {
-        id: maquinaId,
-      },
-      data: {
-        garrafraca: val,
-        
-      },
-    });
-
-    res.status(200).json({ message: `garra fraca configurada` });
-    
-  } catch (error) {
-    console.error('Error updating stock:', error);
-    return res.status(500).json({ error: 'Internal server error.' });
-  }
-});
-
-
-app.get('/garra-fraca/:id', async (req, res) => {
-  try {
-    const maquinaId = req.params.id;
-
-    // Find the Pix_Maquina by id
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: maquinaId,
-      },
-      select: {
-        garrafraca: true,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ error: 'Máquina não encontrada!' });
-    }
-
-    res.status(200).json({ garrafraca: maquina.garrafraca });
-  } catch (error) {
-    console.error('Error retrieving probability:', error);
-    return res.status(500).json({ error: 'Erro interno do servidor.' });
-  }
-});
-
-
-
-app.post('/garra-pegada/:id', async (req, res) => {
-  try {
-    const maquinaId = req.params.id;
-    const garrapegada = req.query.valor;
-   
-
-
-    let val = Number(garrapegada);
-    
-
-    // Find the Pix_Maquina by id
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: maquinaId,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ error: 'Maquina não encontrada!' });
-    }
-
-    // Perform the update
-    await prisma.pix_Maquina.update({
-      where: {
-        id: maquinaId,
-      },
-      data: {
-        garrapegada: val,
-        
-      },
-    });
-
-    res.status(200).json({ message: `garra pegada configurada` });
-    
-  } catch (error) {
-    console.error('Error updating stock:', error);
-    return res.status(500).json({ error: 'Internal server error.' });
-  }
-});
-
-
-app.get('/garra-pegada/:id', async (req, res) => {
-  try {
-    const maquinaId = req.params.id;
-
-    // Find the Pix_Maquina by id
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: maquinaId,
-      },
-      select: {
-        garrapegada: true,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ error: 'Máquina não encontrada!' });
-    }
-
-    res.status(200).json({ garrapegada: maquina.garrapegada });
-  } catch (error) {
-    console.error('Error retrieving probability:', error);
-    return res.status(500).json({ error: 'Erro interno do servidor.' });
-  }
-});
-
-
 
 //id da maquina e a quantidade ?valor=1
 app.post('/setar-estoque/:id', async (req, res) => {
   try {
     const maquinaId = req.params.id;
     const estoque = req.query.valor;
-   
-
 
     let val = Number(estoque);
-    
 
     // Find the Pix_Maquina by id
     const maquina = await prisma.pix_Maquina.findUnique({
@@ -2880,190 +2190,16 @@ app.post('/setar-estoque/:id', async (req, res) => {
       },
       data: {
         estoque: val,
-        
       },
     });
 
     return res.status(200).json({ "novo estoque:": `${val}` });
-    
   } catch (error) {
     console.error('Error updating stock:', error);
     return res.status(500).json({ error: 'Internal server error.' });
   }
 });
 
-
-app.post('/setar-estoque2/:id', async (req, res) => {
-  try {
-    const maquinaId = req.params.id;
-    const estoque2 = req.query.valor;
-   
-
-
-    let val2 = Number(estoque2);
-    
-
-    // Find the Pix_Maquina by id
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: maquinaId,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ error: 'Maquina não encontrada!' });
-    }
-
-    // Perform the updateg
-    await prisma.pix_Maquina.update({
-      where: {
-        id: maquinaId,
-      },
-      data: {
-        estoque2: val2,
-        
-      },
-    });
-
-
-    return res.status(200).json({ "novo estoque2:": `${val2}` });
-    
-  } catch (error) {
-    console.error('Error updating stock:', error);
-    return res.status(500).json({ error: 'Internal server error.' });
-  }
-});
-
-app.post('/setar-estoque3/:id', async (req, res) => {
-  try {
-    const maquinaId = req.params.id;
-    const estoque3 = req.query.valor;
-   
-
-
-    let val3 = Number(estoque3);
-    
-
-    // Find the Pix_Maquina by id
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: maquinaId,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ error: 'Maquina não encontrada!' });
-    }
-
-    // Perform the updateg
-    await prisma.pix_Maquina.update({
-      where: {
-        id: maquinaId,
-      },
-      data: {
-        estoque3: val3,
-        
-      },
-    });
-
-
-    return res.status(200).json({ "novo estoque3:": `${val3}` });
-    
-  } catch (error) {
-    console.error('Error updating stock:', error);
-    return res.status(500).json({ error: 'Internal server error.' });
-  }
-});
-
-
-app.post('/setar-estoque4/:id', async (req, res) => {
-  try {
-    const maquinaId = req.params.id;
-    const estoque4 = req.query.valor;
-   
-
-
-    let val4 = Number(estoque4);
-    
-
-    // Find the Pix_Maquina by id
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: maquinaId,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ error: 'Maquina não encontrada!' });
-    }
-
-    // Perform the updateg
-    await prisma.pix_Maquina.update({
-      where: {
-        id: maquinaId,
-      },
-      data: {
-        estoque4: val4,
-        
-      },
-    });
-
-
-    return res.status(200).json({ "novo estoque4:": `${val4}` });
-    
-  } catch (error) {
-    console.error('Error updating stock:', error);
-    return res.status(500).json({ error: 'Internal server error.' });
-  }
-});
-
-
-app.post('/setar-estoque5/:id', async (req, res) => {
-  try {
-    const maquinaId = req.params.id;
-    const estoque5 = req.query.valor;
-   
-
-
-    let val5 = Number(estoque5);
-    
-
-    // Find the Pix_Maquina by idg
-    const maquina = await prisma.pix_Maquina.findUnique({
-      where: {
-        id: maquinaId,
-      },
-    });
-
-    if (!maquina) {
-      return res.status(404).json({ error: 'Maquina não encontrada!' });
-    }
-
-    // Perform the updateg
-    await prisma.pix_Maquina.update({
-      where: {
-        id: maquinaId,
-      },
-      data: {
-        estoque5: val5,
-        
-      },
-    });
-
-
-    return res.status(200).json({ "novo estoque5:": `${val5}` });
-    
-  } catch (error) {
-    console.error('Error updating stock:', error);
-    return res.status(500).json({ error: 'Internal server error.' });
-  }
-});
-
-app.get("/estoque01", async (req, res) => {
-  const estoque5 = req.query.valor;
-  let val5 = Number(estoque5);
-  return res.status(200).json({ "valor:": `${val5}` });
-});
 
 //RELATORIO DE PAGAMENTOS POR MÁQUINA
 app.get("/pagamentos/:maquinaId", verifyJWT, async (req: any, res) => {
@@ -3096,17 +2232,8 @@ app.get("/pagamentos/:maquinaId", verifyJWT, async (req: any, res) => {
       return res.status(404).json({ error: 'Máquina não encontrada' });
     }
 
-    // Verifica se o estoque está definido e retorna seu valorgig
-    const contadorcredito = maquina.contadorcredito !== null ? maquina.contadorcredito : '--';
-    const contadorpelucia = maquina.contadorpelucia !== null ? maquina.contadorpelucia : '--';
-    const probabilidade = maquina.probabilidade !== null ? maquina.probabilidade : '--';
-    const garraforte = maquina.garraforte !== null ? maquina.garraforte : '--';
+    // Verifica se o estoque está definido e retorna seu valor
     const estoque = maquina.estoque !== null ? maquina.estoque : '--';
-    const estoque2 = maquina.estoque2 !== null ? maquina.estoque2 : '--';
-    const estoque3 = maquina.estoque3 !== null ? maquina.estoque3 : '--';
-    const estoque4 = maquina.estoque4 !== null ? maquina.estoque4 : '--';
-    const estoque5 = maquina.estoque5 !== null ? maquina.estoque5 : '--';
-
 
 
     let totalSemEstorno = 0;
@@ -3136,7 +2263,7 @@ app.get("/pagamentos/:maquinaId", verifyJWT, async (req: any, res) => {
 
     }
 
-    return res.status(200).json({ "total": totalSemEstorno, "estornos": totalComEstorno, "cash": totalEspecie, "garraforte": garraforte, "contadorpelucia": contadorpelucia,"contadorcredito": contadorcredito,"probabilidade": probabilidade,"estoque": estoque, "pagamentos": pagamentos });
+    return res.status(200).json({ "total": totalSemEstorno, "estornos": totalComEstorno, "cash": totalEspecie, "estoque": estoque, "pagamentos": pagamentos });
   } catch (err: any) {
     console.log(err);
     return res.status(500).json({ "retorno": "ERRO" });
@@ -3175,16 +2302,7 @@ app.get("/pagamentos-adm/:maquinaId", verifyJwtPessoa, async (req: any, res) => 
     }
 
     // Verifica se o estoque está definido e retorna seu valor
-    const probabilidade = maquina.probabilidade !== null ? maquina.probabilidade : '--';
-    const garraforte = maquina.garraforte !== null ? maquina.garraforte : '--';
-    const contadorcredito = maquina.contadorcredito !== null ? maquina.contadorcredito : '--';
-    const contadorpelucia = maquina.contadorpelucia !== null ? maquina.contadorpelucia : '--';
     const estoque = maquina.estoque !== null ? maquina.estoque : '--';
-    const estoque2 = maquina.estoque2 !== null ? maquina.estoque2 : '--';
-    const estoque3 = maquina.estoque3 !== null ? maquina.estoque3 : '--';
-    const estoque4 = maquina.estoque4 !== null ? maquina.estoque4 : '--';
-    const estoque5 = maquina.estoque5 !== null ? maquina.estoque5 : '--';
-  
 
 
     let totalSemEstorno = 0;
@@ -3214,7 +2332,7 @@ app.get("/pagamentos-adm/:maquinaId", verifyJwtPessoa, async (req: any, res) => 
 
     }
 
-    return res.status(200).json({ "total": totalSemEstorno, "estornos": totalComEstorno, "cash": totalEspecie, "garraforte": garraforte,"contadorpelucia": contadorpelucia,"contadorcredito": contadorcredito,"probabilidade": probabilidade, "estoque": estoque,"estoque2": estoque2,"estoque3": estoque3,"estoque4": estoque4,"estoque5": estoque5,"pagamentos": pagamentos });
+    return res.status(200).json({ "total": totalSemEstorno, "estornos": totalComEstorno, "cash": totalEspecie, "estoque": estoque, "pagamentos": pagamentos });
   } catch (err: any) {
     console.log(err);
     return res.status(500).json({ "retorno": "ERRO" });
@@ -3845,7 +2963,7 @@ app.post("/relatorio-04-estornos-adm", verifyJwtPessoa, async (req, res) => {
 
 
 
-
+//código escrito por Lucas Carvalho em meados de Fevereiro de 2024..
 
 //git add . 
 
