@@ -11,7 +11,7 @@ const dated = require('date-and-time');
 const { Pool } = require('pg');
 
 
-//jwt
+//jwtnn
 const jwt = require('jsonwebtoken')
 const SECRET = process.env.JWT_SECRET;
 const SECRET_REDEFINICAO = process.env.JWT_SECRET_REDEFINICAO;
