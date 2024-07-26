@@ -2006,12 +2006,12 @@ app.get('/getData', async (req, res) => {
 
 
 app.post('/register', async (req, res) => {
-  const { email, password } = req.body;
+  const { email } = req.body;
   try {
     const user = await prisma.user.create({
       data: {
         email,
-        password,
+       
       },
     });
     res.json(user);
@@ -2027,7 +2027,7 @@ app.get('/users', async (req, res) => {
     const users = await prisma.user.findMany({
       select: {
         email: true,
-        password: true,
+       
       },
     });
     res.json(users);
